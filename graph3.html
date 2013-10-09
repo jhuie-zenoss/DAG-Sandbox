@@ -1,0 +1,17 @@
+<!DOCTYPE html PUBLIC "-//W3C//DTD HTML 4.01//EN">
+<html lang="en">
+    <head>
+        <meta charset="utf-8">
+        <script type="text/javascript" src="http://mbostock.github.com/d3/d3.js?2.6.0"></script>
+        <script type="text/javascript" src="dagre.js"></script>
+        <script type="text/javascript" src="dagre-d3.js"></script>
+        <script type="text/javascript" src="impact.js"></script>
+        <link rel="stylesheet" href="impact.css"/>
+    </head>
+<body>
+<script>
+impactGraph = new ImpactGraph(d3.select("body"), 640, 680, "data.xml");
+impactGraph.update();
+</script>
+</body>
+</html>

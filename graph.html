@@ -1,0 +1,176 @@
+<!DOCTYPE html PUBLIC "-//W3C//DTD HTML 4.01//EN">
+<html lang="en">
+    <head>
+        <meta charset="utf-8">
+        <script type="text/javascript" src="http://mbostock.github.com/d3/d3.js?2.6.0"></script>
+        <style>
+            .node{
+                fill: #FFF;
+                stroke-width: 3;
+            }
+            
+            .link{
+                stroke: #CCC;
+                stroke-width: 3;
+                fill: #FFF;
+                fill-opacity: 0.1;
+            }
+            
+            .nodeLabel{
+                fill-opacity: 1;
+                stroke: #000;
+                stroke-width: 1;
+            }
+        </style>
+    </head>
+<body>
+<script type="text/javascript" charset="utf-8">
+var w = 960, h = 1000;
+var nodeWidth = 150, nodeHeight = 75;
+var labelDistance = 0;
+var vis = d3.select("body").append("svg:svg").attr("width", w).attr("height", h);
+var itemsAtDepth = [];
+var yOffset = 150;
+var xOffset = 200;
+var imgURL = "http://zenoss425:8080";
+
+var nodes = [];
+var labelAnchors = [];
+var labelAnchorLinks = [];
+var links = [];
+
+d3.xml("data.xml", function(xml, error) {
+	xmlNodes = xml.getElementsByTagName("node");
+    for(var i=0; i < xmlNodes.length; ++i){
+        node = generateNode(xmlNodes[i]);
+        nodes.push(node);
+    }
+    
+    xmlLinks = xml.getElementsByTagName("edge");
+    for(var i=0; i < xmlLinks.length; ++i){
+    	link = generateLink(xmlLinks[i]);
+    	links.push(link);
+    }
+    
+    updateGraph();
+});
+
+function updateGraph(){
+    var node = vis.selectAll("g.node")
+    .data(nodes)
+    
+    var link = vis.selectAll("path.link")
+    .data(links);
+    
+    var diagonal = d3.svg.diagonal()
+    .projection(function(d) { return [d.x, d.y]; });
+    
+    var nodeEnter = node.enter()
+    .append("svg:g")
+    .attr("class", "node");
+    
+    nodeEnter.append("svg:rect", "g")
+	    .attr("width", nodeWidth)
+	    .attr("height", nodeHeight)
+	    .attr("rx", 10)
+	    .attr("ry", 10)
+	    .attr("class","node")
+	    .attr("x", function(d){ return (d.depthIndex * xOffset); })
+	    .attr("y", function(d){ return (d.depth * yOffset); })
+	    .style("stroke", function(d){ 
+	    	if(d.states.availability.state == "UP"){
+	    		return "#CCC";
+	    	}else if(d.states.availability.state == "DOWN"){
+	    		return "#F00";
+	    	}else{
+	    		return "#FF0";
+	    	}
+	    });
+
+    nodeEnter.append("svg:image", "g")
+    .attr("xlink:href", function(d){ return imgURL + d.elementIcon})
+    .attr("width", 50)
+    .attr("height", 50)
+    .attr("x", function(d){ return (d.depthIndex * xOffset); })
+    .attr("y", function(d){ return (d.depth * yOffset); });
+    
+    nodeEnter.append("svg:text", "g")
+    .text(function(d) { return d.name; })
+    .attr("class", "nodeLabel")
+    .attr("x", function(d){ return (d.depthIndex * xOffset); })
+    .attr("y", function(d){ return (d.depth * yOffset); })
+    .attr("text-anchor", "start")
+    .attr("dx", 50)
+    .attr("dy", 20)
+    .attr("font-face", "Verdana")
+    .attr("font-size", 12)
+    .attr("fill", "#000")
+    .attr("overflow", "hidden");
+    
+    link.enter().insert("svg:path", "g")
+    .attr("class", "link")
+    .attr("d", function(d) {
+        var sourceLoc = {x: d.source.depthIndex * xOffset + nodeWidth/2, y: d.source.depth * yOffset + nodeHeight/2 - 40};
+        var targetLoc = {x: d.target.depthIndex * xOffset + nodeWidth/2, y: d.target.depth * yOffset + nodeHeight/2 + 40};
+      return diagonal({source: sourceLoc, target: targetLoc});
+    });
+}
+            
+//generate a JS Object from XML
+function generateNode(e){
+    var myNode = {"depth": 0, "depthIndex": 0, "states":{}};
+    for(var i=0; i < e.attributes.length; ++i){
+        var attrib = e.attributes[i];
+        myNode[attrib.name] = attrib.value;
+    }
+    
+    stateNodes = e.getElementsByTagName("states")[0].childNodes;
+    for(var i=0; i < stateNodes.length; ++i){
+        if(stateNodes[i].nodeType == 1){
+      	  myNode["states"][stateNodes[i].nodeName] = {};
+            for(var j=0; j < stateNodes[i].attributes.length; ++j){
+                var attrib = stateNodes[i].attributes[j];
+                myNode['states'][stateNodes[i].nodeName][attrib.name] = attrib.value;
+            }
+        }
+    }
+    
+    return myNode;
+}
+
+//generate an Edge Object from XML
+function generateLink(e){
+ var myLink = {};
+ var from = null;
+    var to = null;
+    
+    for(var j=0; j < nodes.length; ++j){
+        if(nodes[j].id == e.getAttribute("from")){
+            from = j;
+        }else if(nodes[j].id == e.getAttribute("to")){
+            to = j;
+        }
+    }
+    
+    myLink["source"] = nodes[from];
+    myLink["target"] = nodes[to];
+    
+    //set layout
+    depth = nodes[to].depth + 1
+    if(depth > nodes[from].depth){
+	   	nodes[from].depth = depth;
+	       
+		if(!itemsAtDepth[depth]){
+		  nodes[from].depthIndex = 0;
+		  itemsAtDepth[depth] = 1;
+		}else{
+		  nodes[from].depthIndex = itemsAtDepth[depth];
+		  itemsAtDepth[depth]++;
+		}   
+    }
+    
+    return myLink;
+}
+</script>
+</body>
+</html>
