@@ -6,27 +6,29 @@ function ImpactGraph(root, width, height, dataLoc){
 		.append("g")
 		.attr("transform", "translate(20,20)");
 	
-	var imgURL = "http://zenoss425:8080";
+	var imgURL = "http://192.168.0.4:8080";
 	var dataLoc = dataLoc;
 	var g = new dagreD3.Digraph();
 	var renderer = new dagreD3.Renderer();
 	var layout = dagreD3.layout()
-						.nodeSep(40);
+						.nodeSep(40)
+						.rankSep(100);
 	
 	this.update = update;
 	
 	function update(){
-		d3.xml(dataLoc, function(xml, error) {
-			xmlNodes = xml.getElementsByTagName("node");
-		    for(var i=0; i < xmlNodes.length; ++i){
-		        node = generateNode(xmlNodes[i]);
-		        g.addNode(node.id, node);
+		d3.json(dataLoc, function(json, error) {
+			nodes = d3.entries(json.nodes);
+			edges = json.edges;
+
+			for(var i=0; i < nodes.length; ++i){
+				myNode = nodes[i].value;
+				myNode['label'] = '<div class="impactNode"><img src="' + imgURL + myNode.elementIcon + '" />' + myNode.name + '</div>';
+		        g.addNode(nodes[i].key, myNode);
 		    }
-		    
-		    xmlLinks = xml.getElementsByTagName("edge");
-		    for(var i=0; i < xmlLinks.length; ++i){
-		    	link = generateLink(xmlLinks[i]);
-		    	g.addEdge(null, link.target.id, link.source.id, link);
+			
+			for(var i=0; i < edges.length; ++i){
+				g.addEdge(edges[i].id, edges[i].to, edges[i].from);
 		    }
 		    
 		    drawGraph();
@@ -38,7 +40,7 @@ function ImpactGraph(root, width, height, dataLoc){
 		oldDrawNode = renderer.drawNode();
 		renderer.drawNode(function(graph, u, svg) {
 		    oldDrawNode(graph, u, svg);
-		    svg.classed(graph.node(u).states.availability.state, true);
+		    svg.classed(graph.node(u).states.AVAILABILITY.state, true);
 		});
 		
 	    // Cleanup old graph
