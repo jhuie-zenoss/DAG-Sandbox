@@ -53,36 +53,4 @@ function ImpactGraph(root, width, height, dataLoc){
 		      .attr("transform", "translate(" + d3.event.translate + ") scale(" + d3.event.scale + ")");
 		 }));
 	}
-	
-	//generate a JS Object from XML
-	function generateNode(e){
-	    var myNode = {"depth": 0, "depthIndex": 0, "states":{}};
-	    for(var i=0; i < e.attributes.length; ++i){
-	        var attrib = e.attributes[i];
-	        myNode[attrib.name] = attrib.value;
-	    }
-	    
-	    stateNodes = e.getElementsByTagName("states")[0].childNodes;
-	    for(var i=0; i < stateNodes.length; ++i){
-	        if(stateNodes[i].nodeType == 1){
-	      	  myNode["states"][stateNodes[i].nodeName] = {};
-	            for(var j=0; j < stateNodes[i].attributes.length; ++j){
-	                var attrib = stateNodes[i].attributes[j];
-	                myNode['states'][stateNodes[i].nodeName][attrib.name] = attrib.value;
-	            }
-	        }
-	    }
-	    
-	    myNode['label'] = '<div class="impactNode"><img src="' + imgURL + myNode.elementIcon + '" />' + myNode.name + '</div>';
-	    
-	    return myNode;
-	}
-
-	//generate an Edge Object from XML
-	function generateLink(e){
-	    var myLink = {};
-	    myLink["source"] = g.node(e.getAttribute("from"));
-	    myLink["target"] = g.node(e.getAttribute("to"));
-	    return myLink;
-	}
 }

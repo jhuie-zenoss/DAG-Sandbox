@@ -13,12 +13,12 @@ rect {
 }
 
 .node rect {
-  stroke-width: 2px;
+  stroke-width: 4px;
   fill: none;
 }
 
 .UP rect{
-  stroke: #333;
+  stroke: #CCC;
 }
 
 .DOWN rect{
@@ -35,8 +35,8 @@ rect {
 
 .edge path {
   fill: none;
-  stroke: #333;
-  stroke-width: 1.5px;
+  stroke: #666;
+  stroke-width: 4px;
 }
 
 .impactNode{
