@@ -17,7 +17,7 @@ function ImpactGraph(root, width, height, dataLoc){
 	this.update = update;
 	
 	function update(){
-		d3.json(dataLoc, function(json, error) {
+		d3.json(dataLoc, function(error, json) {
 			nodes = d3.entries(json.nodes);
 			edges = json.edges;
 
