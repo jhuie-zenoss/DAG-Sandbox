@@ -6,90 +6,88 @@ function ImpactGraph(root, width, height, dataLoc){
 		.append("g")
 		.attr("transform", "translate(20,20)");
 	
-	var imgURL = "http://192.168.0.4:8080";
+	var imgURL = "http://192.168.0.3:8080";
 	var dataLoc = dataLoc;
 	var g = new dagreD3.Digraph();
     var duration = 500;
 	var renderer = new dagreD3.Renderer();
+
     //set new draw method
-    oldDrawNode = renderer.drawNode();
-    renderer.drawNode(function(graph, u, svg) {
-        oldDrawNode(graph, u, svg);
-        svg.classed(graph.node(u).states.AVAILABILITY.state, true);
+    var renderer = new dagreD3.Renderer();
+    var oldDrawNodes = renderer.drawNodes();
+    renderer.drawNodes(function(graph, root) {
+        var svgNodes = oldDrawNodes(graph, root);
+        svgNodes.each(function(u) { d3.select(this).classed(graph.node(u).nodeclass, true); });
+        return svgNodes;
     });
 
-    renderer.createNodes(function (graph, svg) {
-        var nodes = svg.selectAll("g .node")
-            .data(graph.nodes(), function(d, i) { return d; });
-        var enter = nodes.enter()
-            .append("g")
-            .style("opacity", 1e-6)
-            .attr("transform", function(d) {
-                var n = graph.node(d);
-                return "translate(" + n.y0 + "," + n.x0 + ")";
-            })
-            .on("click", onClick)
-            .classed("node", true);
+//    renderer.createNodes(function (graph, svg) {
+//        var nodes = svg.selectAll("g .node")
+//            .data(graph.nodes(), function(d, i) { return d; });
+//        var enter = nodes.enter()
+//            .append("g")
+//            .style("opacity", 1e-6)
+//            .attr("transform", function(d) {
+//                var n = graph.node(d);
+//                return "translate(" + n.y0 + "," + n.x0 + ")";
+//            })
+//            .on("click", onClick)
+//            .classed("node", true);
+//
+//        var update = nodes
+//            .transition()
+//            .duration(duration)
+//            .style("opacity", 1);
+//
+//        var exit = nodes.exit()
+//            .remove();
+//        return update;
+//
+//    });
+//
+//    renderer.createEdges(function(graph, svg) {
+//        var edges = svg
+//            .selectAll("g .edge")
+//            .data(graph.edges(), function(d) {return d;});
+//
+//        var enter = edges.enter()
+//            .insert("g", "*")
+//            .classed("edge", true)
+//            .attr("transform", "translate (" + width/2 + "," + height/2 + ") scale(0,0)")
+//            .style("stroke-opacity", 1e-6);
+//
+//        var update = edges
+//            .transition()
+//            .duration(duration)
+//            .attr("transform", "scale(1,1)")
+//            .style("stroke-opacity", 1);
+//
+//        var exit = edges.exit()
+//            .remove();
+//
+//        return enter;
+//    } );
 
-        var update = nodes
-            .transition()
-            .duration(duration)
-            .style("opacity", 1);
-
-        var exit = nodes.exit()
-            .remove();
-        return update;
-
-    });
-
-    renderer.createEdges(function(graph, svg) {
-        var edges = svg
-            .selectAll("g .edge")
-            .data(graph.edges(), function(d) {return d;});
-
-        var enter = edges.enter()
-            .insert("g", "*")
-            .classed("edge", true)
-            .attr("transform", "translate (" + width/2 + "," + height/2 + ") scale(0,0)")
-            .style("stroke-opacity", 1e-6);
-
-        var update = edges
-            .transition()
-            .duration(duration)
-            .attr("transform", "scale(1,1)")
-            .style("stroke-opacity", 1);
-
-        var exit = edges.exit()
-            .remove();
-
-        return enter;
-    } );
     var layout = dagreD3.layout()
 						.nodeSep(40)
-						.rankSep(100);
+						.rankSep(100)
+                        .rankDir("BT");
 	
 	this.update = update;
 
 
 
 	function update(){
-		d3.json(dataLoc, function(error, json) {
-			nodes = d3.entries(json.nodes);
-			edges = json.edges;
+		d3.xml(dataLoc, function(error, xml) {
+            domNodes = xml.getElementsByTagName("node");
+            for(var i=0; i<domNodes.length; ++i){
+                g.addNode(domNodes[i].getAttribute("id"), parseNode(domNodes[i]));
+            }
 
-			for(var i=0; i < nodes.length; ++i){
-				myNode = nodes[i].value;
-				myNode['label'] = '<div class="impactNode"><img src="' + imgURL +
-                    myNode.elementIcon + '" />' + myNode.name + '</div>';
-                myNode.x0 = height/2;
-                myNode.y0 = width/2;
-		        g.addNode(nodes[i].key, myNode);
-		    }
-			
-			for(var i=0; i < edges.length; ++i){
-                var id = edges[i].from + "_" + edges[i].to;
-                g.addEdge(id, edges[i].to, edges[i].from);
-		    }
+            domEdges = xml.getElementsByTagName("edge");
+            for(var i=0; i<domEdges.length; ++i){
+                g.addEdge(domEdges[i].getAttribute("id"), domEdges[i].getAttribute("source"), domEdges[i].getAttribute("target"))
+            }
 		    
 		    drawGraph();
 		});
@@ -108,15 +106,34 @@ function ImpactGraph(root, width, height, dataLoc){
 	}
 
     function onClick(d) {
-        console.log(d);
-        var children = g.successors(d);
-        for (var i=0; i<children.length;++i) {
-            g.delNode(children[i]);
+//        console.log(d);
+//        var children = g.successors(d);
+//        for (var i=0; i<children.length;++i) {
+//            g.delNode(children[i]);
+//        }
+//        var edges = g.outEdges(d);
+//        for (var i=0; i < edges.length;++i) {
+//            g.delEdge(edges[i]);
+//        }
+//        drawGraph();
+    }
+
+    function parseNode(domElement){
+        var node = {};
+        node.id = domElement.getAttribute("id");
+
+        var nodeData = domElement.getElementsByTagName("data");
+        for(var i=0; i<nodeData.length; ++i){
+            node[nodeData[i].getAttribute("key")] = nodeData[i].innerHTML;
         }
-        var edges = g.outEdges(d);
-        for (var i=0; i < edges.length;++i) {
-            g.delEdge(edges[i]);
-        }
-        drawGraph();
+
+        node.label = '<div class="impactNode"><img src="' + imgURL +
+            node.elementIcon + '" />' + node.PROP_name + '</div>';
+        node.nodeclass = node.INTRINSIC_STATE_AVAILABILITY;
+        alert(node.nodeclass);
+        node.x0 = height/2;
+        node.y0 = width/2;
+
+        return node;
     }
 }

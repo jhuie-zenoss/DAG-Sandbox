@@ -2,15 +2,15 @@
 <html lang="en">
     <head>
         <meta charset="utf-8">
-        <script type="text/javascript" src="lib/d3.v3.js"></script>
-        <script type="text/javascript" src="lib/dagre.js"></script>
-        <script type="text/javascript" src="lib/dagre-d3.js"></script>
+        <script type="text/javascript" src="http://d3js.org/d3.v3.min.js"></script>
+        <script type="text/javascript" src="http://cpettitt.github.io/project/dagre/latest/dagre.min.js"></script>
+        <script type="text/javascript" src="http://cpettitt.github.io/project/dagre-d3/latest/dagre-d3.min.js"></script>
         <script type="text/javascript" src="impact.js"></script>
         <link rel="stylesheet" href="impact.css"/>
     </head>
 <body>
 <script>
-impactGraph = new ImpactGraph(d3.select("body"), 2400, 1200, "data/svc_model.min.json");
+impactGraph = new ImpactGraph(d3.select("body"), 2400, 1200, "data/data.xml");
 impactGraph.update();
 </script>
 </body>
